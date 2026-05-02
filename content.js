@@ -7,11 +7,12 @@ function buildComboOptions() {
     const options = [];
     petsData.forEach(function(pet) {
         const petName = langData.pets[String(pet.pet_id)] || ('펫 ' + pet.pet_id);
-        for (let stage = 1; stage <= 5; stage += 1) {
+        for (let stage = 0; stage <= 5; stage += 1) {
             if (!pet.stages || !pet.stages[String(stage)]) {
                 continue;
             }
-            options.push({ value: String(pet.pet_id) + ':' + String(stage), petId: String(pet.pet_id), stage: stage, label: petName + ' ' + stage + '강' });
+            const stageLabel = stage === 0 ? '0강' : String(stage) + '강';
+            options.push({ value: String(pet.pet_id) + ':' + String(stage), petId: String(pet.pet_id), stage: stage, label: petName + ' ' + stageLabel });
         }
     });
     return options;
@@ -69,8 +70,7 @@ function buildRowList(stats1, stats2) {
     const union = new Set(Object.keys(stats1).concat(Object.keys(stats2)));
     const rows = [];
     union.forEach(function(statIdxText) {
-        const statIdx = Number(statIdxText);
-        getStatRowConfigs(statIdx).forEach(function(row) {
+        getStatRowConfigs(statIdxText).forEach(function(row) {
             rows.push(row);
         });
     });
@@ -84,15 +84,28 @@ function buildRowList(stats1, stats2) {
 }
 
 function getRowStat(stats, row) {
-    const stat = stats[row.statIdx];
+    const stat = stats[String(row.statIdx)];
     if (!stat) {
         return null;
     }
     return { value: Number(stat[0] || 0), bonus: Number(stat[1] || 0) };
 }
 
+function isVisibleRowValue(row, rowStat) {
+    if (!rowStat) {
+        return false;
+    }
+    if (row.kind === 'attack_total') {
+        return Number(rowStat.bonus || 0) !== 0;
+    }
+    return Number(rowStat.value || 0) !== 0;
+}
+
 function formatRowValue(row, rowStat) {
     if (!rowStat) {
+        return '';
+    }
+    if (!isVisibleRowValue(row, rowStat)) {
         return '';
     }
     if (row.kind === 'attack_flat') {
@@ -178,7 +191,7 @@ function generateComparisonTable(pet1, stage1, pet2, stage2) {
     rows.forEach(function(row) {
         const rowStat1 = getRowStat(stats1, row);
         const rowStat2 = getRowStat(stats2, row);
-        if (!rowStat1 && !rowStat2) {
+        if (!isVisibleRowValue(row, rowStat1) && !isVisibleRowValue(row, rowStat2)) {
             return;
         }
         const value1 = row.kind === 'attack_total' ? Number(rowStat1 ? rowStat1.bonus : 0) : Number(rowStat1 ? rowStat1.value : 0);
