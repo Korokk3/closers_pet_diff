@@ -119,8 +119,8 @@ function populateSelects() {
     const pet2Select = document.getElementById('pet2-select');
     const selected1 = pet1Select.value;
     const selected2 = pet2Select.value;
-    pet1Select.innerHTML = '<option value="">-- 펫 및 강화단계 산택 --</option>';
-    pet2Select.innerHTML = '<option value="">-- 펫 및 강화단계 산택 --</option>';
+    pet1Select.innerHTML = '<option value="">-- 펫 및 강화단계 선택 --</option>';
+    pet2Select.innerHTML = '<option value="">-- 펫 및 강화단계 선택 --</option>';
     comboOptions.forEach(function(combo) {
         if (combo.value !== selected2) {
             const option1 = document.createElement('option');
@@ -174,7 +174,7 @@ function generateComparisonTable(pet1, stage1, pet2, stage2) {
         document.getElementById('comparison-area').innerHTML = '<div class="empty-state"><p>표시할 스탯이 없습니다.</p></div>';
         return;
     }
-    let html = '<table><thead><tr><th>능력치</th><th>펫 1</th><th>펫 2</th><th>차이</th></tr></thead><tbody>';
+    let html = '<table><thead><tr><th>능력치</th><th>펫 1</th><th>펫 2</th><th>비교</th></tr></thead><tbody>';
     rows.forEach(function(row) {
         const rowStat1 = getRowStat(stats1, row);
         const rowStat2 = getRowStat(stats2, row);
