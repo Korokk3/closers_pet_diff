@@ -37,6 +37,10 @@ function formatPercent(value) {
     return formatNumber(Number(value || 0) * 100) + '%';
 }
 
+function formatCount(value) {
+    return formatNumber(Number(value || 0)) + '개';
+}
+
 function getSelectedCombo(selectElement) {
     const value = selectElement.value;
     if (!value) {
@@ -66,6 +70,13 @@ function getStatRowConfigs(statIdx) {
     return [{ statIdx: statIdx, kind: 'flat', label: meta.label, order: meta.order, sortLabel: meta.label }];
 }
 
+function getAutoItemSlotCount(stage) {
+    if (stage <= 1) {
+        return 0;
+    }
+    return stage - 1;
+}
+
 function buildRowList(stats1, stats2) {
     const union = new Set(Object.keys(stats1).concat(Object.keys(stats2)));
     const rows = [];
@@ -80,6 +91,7 @@ function buildRowList(stats1, stats2) {
         }
         return String(a.sortLabel).localeCompare(String(b.sortLabel), 'ko');
     });
+    rows.push({ statIdx: '__AUTO_ITEM_SLOTS__', kind: 'auto_item_slots', label: '자동 아이템 사용 슬롯 개수', order: 999, sortLabel: '자동 아이템 사용 슬롯 개수' });
     return rows;
 }
 
@@ -95,6 +107,9 @@ function isVisibleRowValue(row, rowStat) {
     if (!rowStat) {
         return false;
     }
+    if (row.kind === 'auto_item_slots') {
+        return Number(rowStat.value || 0) !== 0;
+    }
     if (row.kind === 'attack_total') {
         return Number(rowStat.bonus || 0) !== 0;
     }
@@ -107,6 +122,9 @@ function formatRowValue(row, rowStat) {
     }
     if (!isVisibleRowValue(row, rowStat)) {
         return '';
+    }
+    if (row.kind === 'auto_item_slots') {
+        return formatCount(rowStat ? rowStat.value : 0);
     }
     if (row.kind === 'attack_flat') {
         return formatNumber(rowStat.value);
@@ -121,6 +139,9 @@ function formatRowValue(row, rowStat) {
 }
 
 function formatRowDiff(row, diff) {
+    if (row.kind === 'auto_item_slots') {
+        return (diff > 0 ? '+' : '') + formatNumber(diff) + '개';
+    }
     if (row.kind === 'flat' || row.kind === 'attack_flat') {
         return (diff > 0 ? '+' : '') + formatNumber(diff);
     }
@@ -189,8 +210,12 @@ function generateComparisonTable(pet1, stage1, pet2, stage2) {
     }
     let html = '<table><thead><tr><th>능력치</th><th>펫 1</th><th>펫 2</th><th>비교</th></tr></thead><tbody>';
     rows.forEach(function(row) {
-        const rowStat1 = getRowStat(stats1, row);
-        const rowStat2 = getRowStat(stats2, row);
+        let rowStat1 = getRowStat(stats1, row);
+        let rowStat2 = getRowStat(stats2, row);
+        if (row.kind === 'auto_item_slots') {
+            rowStat1 = { value: getAutoItemSlotCount(stage1), bonus: 0 };
+            rowStat2 = { value: getAutoItemSlotCount(stage2), bonus: 0 };
+        }
         if (!isVisibleRowValue(row, rowStat1) && !isVisibleRowValue(row, rowStat2)) {
             return;
         }
